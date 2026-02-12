@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Phone Stripper</title>
+</head>
+<body style="font-family: sans-serif; padding: 20px; max-width: 900px;">
+  <h3>Phone Stripper (Auto)</h3>
+
+  <div style="display:flex; gap:20px; flex-wrap:wrap;">
+    <label><input type="checkbox" id="keep10" /> Keep only last 10 digits</label>
+    <label><input type="checkbox" id="formatPretty" /> Format as (XXX) XXX-XXXX</label>
+    <label><input type="checkbox" id="dropEmpty" checked /> Drop empty lines</label>
+    <label><input type="checkbox" id="dedupe" /> Remove duplicates</label>
+    <label><input type="checkbox" id="autocopy" checked /> Auto-copy output</label>
+  </div>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;">
+    <div>
+      <p style="margin: 0 0 6px 0;">Input (paste anything):</p>
+      <textarea id="input" rows="14" style="width:100%; font-size:14px;"
+        placeholder="765.932.2005, 765.932.2994 / 317.462.6852"></textarea>
+      <div style="margin-top: 8px; display:flex; gap: 10px; flex-wrap:wrap;">
+        <button id="clearBtn">Clear</button>
+        <span id="status" style="opacity:0.8;"></span>
+      </div>
+    </div>
+
+    <div>
+      <p style="margin: 0 0 6px 0;">Output (one per line):</p>
+      <textarea id="output" rows="14" style="width:100%; font-size:14px;" readonly></textarea>
+    </div>
+  </div>
+
+<script>
+const el = (id) => document.getElementById(id);
+
+function pretty10(d) {
+  if (d.length !== 10) return d;
+  return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+}
+
+function splitIntoPieces(text) {
+  // Split on common separators: newline, comma, slash, semicolon, tab, pipe
+  // This fixes the “comma separated list” bug.
+  return text.split(/[\r\n,;\/\t|]+/g);
+}
+
+function normalizeToPhoneDigits(piece) {
+  const digits = (piece || "").replace(/\D/g, "");
+  if (!digits) return "";
+
+  // Accept:
+  // - 10 digits (standard NANP)
+  // - 11 digits starting with 1 (US country code)
+  // - >11 digits: ignore (usually garbage concatenations)
+  if (digits.length === 10) return digits;
+  if (digits.length === 11 && digits.startsWith("1")) return digits.slice(1);
+
+  // Also allow things like "ext 9" attached after a number:
+  // If there are >=10 digits, take the LAST 10 (common when extensions exist).
+  if (digits.length > 10) return digits.slice(-10);
+
+  // Too short to be a phone number
+  return "";
+}
+
+function recompute() {
+  const keep10 = el("keep10").checked;     // now mostly redundant, but still useful if you paste weird stuff
+  const pretty = el("formatPretty").checked;
+  const dropEmpty = el("dropEmpty").checked;
+  const dedupe = el("dedupe").checked;
+
+  const pieces = splitIntoPieces(el("input").value);
+
+  let outList = pieces
+    .map(p => {
+      let d = normalizeToPhoneDigits(p);
+      if (!d) return "";
+      if (keep10) d = d.slice(-10);
+      return d;
+    })
+    .filter(Boolean);
+
+  if (pretty) outList = outList.map(pretty10);
+
+  if (dropEmpty) outList = outList.filter(x => x.length > 0);
+
+  if (dedupe) {
+    const seen = new Set();
+    outList = outList.filter(x => (seen.has(x) ? false : (seen.add(x), true)));
+  }
+
+  const out = outList.join("\n");
+  el("output").value = out;
+
+  if (el("autocopy").checked && out.length > 0) {
+    navigator.clipboard.writeText(out).then(() => {
+      el("status").textContent = "Copied!";
+      clearTimeout(window.__copyT);
+      window.__copyT = setTimeout(() => el("status").textContent = "", 800);
+    }).catch(() => {
+      el("status").textContent = "Clipboard blocked (browser)";
+    });
+  } else {
+    el("status").textContent = "";
+  }
+}
+
+["input","keep10","formatPretty","dropEmpty","dedupe","autocopy"]
+  .forEach(id => el(id).addEventListener(id === "input" ? "input" : "change", recompute));
+
+el("clearBtn").addEventListener("click", () => {
+  el("input").value = "";
+  el("output").value = "";
+  el("status").textContent = "";
+});
+
+recompute();
+</script>
+</body>
+</html>
