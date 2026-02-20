@@ -1,148 +1,1277 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Phone Cleaner</title>
-</head>
-<body style="font-family: sans-serif; padding: 20px; max-width: 900px;">
-  <h3>Phone Cleaner (Auto)</h3>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EZ Phone Tools</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0e0f11;
+      --surface: #16181c;
+      --surface2: #1e2026;
+      --border: #2a2d35;
+      --border2: #363a44;
+      --accent: #00e5a0;
+      --accent2: #00b880;
+      --accent-dim: rgba(0,229,160,0.1);
+      --accent-dim2: rgba(0,229,160,0.05);
+      --text: #e2eeff;
+      --text2: #a8bcdc;
+      --text3: #7a96be;
+      --danger: #ff5f5f;
+      --warn: #ffa94d;
+      --good: #00e5a0;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+      --radius: 6px;
+      --transition: 0.18s ease;
+    }
+    .light {
+      --bg: #f0f1f4;
+      --surface: #ffffff;
+      --surface2: #f7f8fa;
+      --border: #dde0e8;
+      --border2: #c8ccd6;
+      --accent: #007a50;
+      --accent2: #005a3a;
+      --accent-dim: rgba(0,122,80,0.08);
+      --accent-dim2: rgba(0,122,80,0.04);
+      --text: #1a1c22;
+      --text2: #2e3650;
+      --text3: #4a5270;
+      --danger: #cc3333;
+      --warn: #c47700;
+      --good: #007a50;
+    }
 
-  <div style="display:flex; gap:20px; flex-wrap:wrap;">
-    <label><input type="checkbox" id="keep10" /> Keep only last 10 digits</label>
-    <label><input type="checkbox" id="formatPretty" /> Format as (XXX) XXX-XXXX</label>
-    <label><input type="checkbox" id="dropEmpty" checked /> Drop empty lines</label>
-    <label><input type="checkbox" id="dedupe" /> Remove duplicates</label>
-    <label><input type="checkbox" id="autocopy" checked /> Auto-copy output</label>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      transition: background var(--transition), color var(--transition);
+    }
+
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .logo {
+      font-family: var(--mono);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--accent);
+    }
+    .logo span { color: var(--text2); font-weight: 400; }
+    .theme-btn {
+      background: none;
+      border: 1px solid var(--border2);
+      color: var(--text2);
+      border-radius: var(--radius);
+      padding: 6px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .light .theme-btn { color: #2e3650; border-color: #8a90a8; }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      padding: 0 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      overflow-x: auto;
+    }
+    .tab {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 14px 20px;
+      cursor: pointer;
+      color: var(--text3);
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all var(--transition);
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      white-space: nowrap;
+    }
+    .tab:hover { color: var(--text2); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ── MAIN ── */
+    main { padding: 22px 28px; max-width: 1440px; }
+
+    .panel { display: none; }
+    .panel.active { display: block; }
+
+    /* ── OPTION BAR ── */
+    .option-bar {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 10px 16px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 14px;
+    }
+    .chk-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text2);
+      cursor: pointer;
+      user-select: none;
+    }
+    .chk-label input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+    .chk-label:hover { color: var(--text); }
+
+    select {
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      color: var(--text2);
+      font-family: var(--mono);
+      font-size: 12px;
+      padding: 5px 10px;
+      cursor: pointer;
+      outline: none;
+      transition: all var(--transition);
+    }
+    select:hover, select:focus { border-color: var(--accent); color: var(--text); }
+
+    /* ── GRID LAYOUTS ── */
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 860px) { .grid-2 { grid-template-columns: 1fr; } }
+    .grid-3 { display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 16px; }
+    @media (max-width: 1000px) { .grid-3 { grid-template-columns: 1fr 1fr; } }
+    @media (max-width: 640px) { .grid-3 { grid-template-columns: 1fr; } }
+
+    /* ── PANE ── */
+    .pane { display: flex; flex-direction: column; gap: 8px; }
+    .pane-header { display: flex; align-items: center; justify-content: space-between; min-height: 26px; }
+    .pane-title {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+    .pane-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+
+    .count-badge {
+      font-family: var(--mono);
+      font-size: 11px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid rgba(0,229,160,0.2);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    .light .count-badge { border-color: rgba(0,122,80,0.2); }
+
+    textarea {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12.5px;
+      line-height: 1.65;
+      padding: 12px 14px;
+      resize: vertical;
+      transition: border-color var(--transition), background var(--transition), color var(--transition);
+      outline: none;
+    }
+    textarea:focus { border-color: var(--border2); }
+    textarea[readonly] { background: var(--surface2); cursor: default; }
+    textarea::placeholder { color: #6a86aa; opacity: 1; }
+    .light textarea::placeholder { color: #6a7090; opacity: 1; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 6px 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text2);
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim2); }
+    .btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #061a12;
+      font-weight: 600;
+    }
+    .btn.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+    .btn:active { transform: scale(0.97); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
+
+    .action-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .status-msg {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--accent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .status-msg.show { opacity: 1; }
+
+    /* ── STATS BAR ── */
+    .stats {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      padding: 10px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .stat { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+    .stat strong { color: var(--accent); font-weight: 600; }
+
+    /* ── INSPECTOR (Extension Blaster) ── */
+    .inspect-summary {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 6px 16px;
+      font-size: 13px;
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .inspect-summary .lbl { color: var(--text3); font-family: var(--mono); font-size: 12px; }
+    .inspect-summary .val { color: var(--text); font-family: var(--mono); font-size: 12px; font-weight: 600; }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      color: var(--text2);
+    }
+    .pill.good { background: rgba(0,229,160,0.1); border-color: rgba(0,229,160,0.3); color: var(--good); }
+    .pill.warn { background: rgba(255,169,77,0.1); border-color: rgba(255,169,77,0.3); color: var(--warn); }
+    .pill.bad  { background: rgba(255,95,95,0.1);  border-color: rgba(255,95,95,0.3);  color: var(--danger); }
+    .light .pill.good { background: rgba(0,122,80,0.08); border-color: rgba(0,122,80,0.25); }
+
+    .change-list {
+      max-height: 420px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+    .change-item {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .change-item:last-child { border-bottom: none; }
+    .change-item .ci-label { color: var(--text3); font-size: 11px; margin-bottom: 4px; letter-spacing: 0.08em; }
+    .change-item .ci-lines { color: var(--text2); line-height: 1.7; }
+    .change-item .ci-arrow { color: var(--text3); margin: 6px 0; }
+    .change-item .ci-after { color: var(--accent); line-height: 1.7; }
+
+    /* ── INPUT GROUPS (for labeled inputs) ── */
+    .input-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+    .input-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text3); }
+    input[type=text] {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12.5px;
+      padding: 8px 12px;
+      outline: none;
+      transition: border-color var(--transition);
+      width: 100%;
+    }
+    input[type=text]:focus { border-color: var(--border2); }
+    input[type=text]::placeholder { color: #6a86aa; }
+    .light input[type=text]::placeholder { color: #6a7090; }
+
+    /* ── SECTION HEADING ── */
+    .section-head {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text3);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    /* ── INNER TABS (Extension Blaster sub-tabs) ── */
+    .inner-tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 14px;
+    }
+    .inner-tab {
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      padding: 6px 16px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      border: 1px solid var(--border2);
+      background: var(--surface2);
+      color: var(--text3);
+      transition: all var(--transition);
+    }
+    .inner-tab:hover { color: var(--text2); border-color: var(--border2); }
+    .inner-tab.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+    .inner-panel { display: none; }
+    .inner-panel.active { display: block; }
+
+    .mb12 { margin-bottom: 12px; }
+    .mb16 { margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">EZ Phone Tools</div>
+  <button class="theme-btn" id="themeToggle">☀ Light</button>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-tab="cleaner">Quick Clean</button>
+  <button class="tab" data-tab="expander">DID Expander</button>
+  <button class="tab" data-tab="rebuilder">DID Rebuilder</button>
+  <button class="tab" data-tab="extblaster">Extension Blaster</button>
+</div>
+
+<main>
+
+  <!-- ══════════════════════════════════════════
+       TAB 1 — QUICK CLEAN
+  ══════════════════════════════════════════ -->
+  <div class="panel active" id="panel-cleaner">
+    <div class="option-bar">
+      <label class="chk-label"><input type="checkbox" id="c-keep10"> Keep only last 10 digits</label>
+      <label class="chk-label"><input type="checkbox" id="c-pretty"> Format as (XXX) XXX-XXXX</label>
+      <label class="chk-label"><input type="checkbox" id="c-dropEmpty" checked> Drop empty lines</label>
+      <label class="chk-label"><input type="checkbox" id="c-dedupe"> Remove duplicates</label>
+      <label class="chk-label"><input type="checkbox" id="c-autocopy" checked> Auto-copy output</label>
+    </div>
+    <div class="grid-2">
+      <div class="pane">
+        <div class="pane-header">
+          <span class="pane-title">Input — paste anything</span>
+          <div class="pane-actions">
+            <button class="btn" id="c-clearBtn">Clear</button>
+            <span class="status-msg" id="c-status">Copied!</span>
+          </div>
+        </div>
+        <textarea class="input-ta" id="c-input" style="min-height:300px;"
+          placeholder="765.932.2005, 765.932.2994 / 317.462.6852&#10;DID range - 7659327000 - 7659327099&#10;(765) 932-2005"></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-header">
+          <span class="pane-title">Output — one per line</span>
+          <div class="pane-actions">
+            <span class="count-badge" id="c-count">0 numbers</span>
+            <button class="btn" id="c-copyBtn">Copy</button>
+            <button class="btn" id="c-exportBtn">↓ .txt</button>
+          </div>
+        </div>
+        <textarea id="c-output" readonly style="min-height:300px;"></textarea>
+      </div>
+    </div>
   </div>
 
-  <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 14px;">
-    <div>
-      <p style="margin: 0 0 6px 0;">Input (paste anything):</p>
-      <textarea id="input" rows="14" style="width:100%; font-size:14px;"
-        placeholder="765.932.2005, 765.932.2994 / 317.462.6852"></textarea>
-      <div style="margin-top: 8px; display:flex; gap: 10px; flex-wrap:wrap;">
-        <button id="clearBtn">Clear</button>
-        <span id="status" style="opacity:0.8;"></span>
+  <!-- ══════════════════════════════════════════
+       TAB 2 — DID EXPANDER
+  ══════════════════════════════════════════ -->
+  <div class="panel" id="panel-expander">
+    <div class="option-bar">
+      <label class="chk-label"><input type="checkbox" id="e-sort" checked> Sort groups by starting number</label>
+      <label class="chk-label"><input type="checkbox" id="e-dedupe" checked> De-duplicate numbers</label>
+      <label class="chk-label"><input type="checkbox" id="e-autocopy"> Auto-copy numbers on process</label>
+    </div>
+    <div class="action-row">
+      <button class="btn primary" id="e-processBtn">Process</button>
+      <button class="btn" id="e-copyGrouped">Copy Grouped</button>
+      <button class="btn" id="e-copyNumbers">Copy Numbers</button>
+      <button class="btn" id="e-exportGrouped">↓ Grouped .txt</button>
+      <button class="btn" id="e-exportNumbers">↓ Numbers .txt</button>
+      <button class="btn" id="e-clearBtn">Clear</button>
+      <span class="status-msg" id="e-status"></span>
+    </div>
+    <div class="pane mb16">
+      <div class="pane-header">
+        <span class="pane-title">Input — paste Metaswitch / portal blob</span>
+      </div>
+      <textarea id="e-input" style="min-height:200px;"
+        placeholder="DID range - 7659322355 (single DN)&#10;DID Number: 7659322355&#10;&#10;Delete&#10;&#10;DID range - 7659327000 - 7659327099&#10;DID Numbers:  ▼"></textarea>
+    </div>
+    <div id="e-stats" class="stats" style="display:none;">
+      <span class="stat">Groups: <strong id="e-statGroups">0</strong></span>
+      <span class="stat">Total numbers: <strong id="e-statTotal">0</strong></span>
+      <span class="stat">Ranges expanded: <strong id="e-statRanges">0</strong></span>
+      <span class="stat">Single DNs: <strong id="e-statSingles">0</strong></span>
+    </div>
+    <div class="grid-2">
+      <div class="pane">
+        <div class="pane-header">
+          <span class="pane-title">Grouped output</span>
+          <span class="count-badge" id="e-countGrouped">0 groups</span>
+        </div>
+        <textarea id="e-grouped" readonly style="min-height:320px;"></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-header">
+          <span class="pane-title">Numbers only</span>
+          <span class="count-badge" id="e-countNumbers">0 numbers</span>
+        </div>
+        <textarea id="e-numbers" readonly style="min-height:320px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB 3 — DID RANGE REBUILDER
+  ══════════════════════════════════════════ -->
+  <div class="panel" id="panel-rebuilder">
+    <div class="grid-2 mb16">
+      <div class="pane">
+        <div class="pane-header">
+          <span class="pane-title">Input — paste DID block</span>
+        </div>
+        <textarea id="r-input" style="min-height:220px;"
+          placeholder="DID range - 7659327000 - 7659327099&#10;DID range - 7659327400 - 7659327699&#10;DID range - 7659322355 (single DN)"></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-header">
+          <span class="pane-title">Numbers / ranges to remove</span>
+        </div>
+        <textarea id="r-remove" style="min-height:220px;"
+          placeholder="7659327455, 7659327456&#10;7659327400-7659327420&#10;7659322355"></textarea>
+      </div>
+    </div>
+    <div class="action-row">
+      <button class="btn primary" id="r-processBtn">Process</button>
+      <button class="btn" id="r-copyRebuild">Copy Rebuilt</button>
+      <button class="btn" id="r-copyRemoved">Copy Removed</button>
+      <button class="btn" id="r-exportRebuild">↓ Rebuilt .txt</button>
+      <button class="btn" id="r-exportRemoved">↓ Removed .txt</button>
+      <button class="btn" id="r-clearBtn">Clear</button>
+      <span class="status-msg" id="r-status"></span>
+    </div>
+    <div id="r-stats" class="stats" style="display:none;">
+      <span class="stat">Rebuilt segments: <strong id="r-statRebuilt">0</strong></span>
+      <span class="stat">Removed segments: <strong id="r-statRemoved">0</strong></span>
+      <span class="stat">Numbers removed: <strong id="r-statRemovedCount">0</strong></span>
+    </div>
+    <div class="grid-2">
+      <div class="pane">
+        <div class="pane-header">
+          <span class="pane-title">Rebuilt ranges</span>
+          <span class="count-badge" id="r-countRebuilt">0 segments</span>
+        </div>
+        <textarea id="r-rebuild" readonly style="min-height:280px;"></textarea>
+      </div>
+      <div class="pane">
+        <div class="pane-header">
+          <span class="pane-title">Removed set</span>
+          <span class="count-badge" id="r-countRemoved">0 segments</span>
+        </div>
+        <textarea id="r-removed" readonly style="min-height:280px;"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════
+       TAB 4 — EXTENSION BLASTER
+  ══════════════════════════════════════════ -->
+  <div class="panel" id="panel-extblaster">
+    <div class="inner-tabs">
+      <button class="inner-tab active" data-inner="eb-rebuild">Remove &amp; Rebuild</button>
+      <button class="inner-tab" data-inner="eb-inspect">Inspect Ranges</button>
+    </div>
+
+    <!-- INNER: Remove & Rebuild -->
+    <div class="inner-panel active" id="eb-rebuild">
+      <div class="grid-3 mb16">
+        <div class="pane">
+          <div class="pane-header">
+            <span class="pane-title">Input — paste extension table</span>
+            <span class="count-badge" id="eb-pillLoaded">No data loaded</span>
+          </div>
+          <textarea id="eb-paste" style="min-height:240px;"
+            placeholder="Paste the exported extension table here...&#10;&#10;Format: Extension   Phone Number   (LPL col optional)&#10;&#10;Example:&#10;3421    (317) 736-3421&#10;3422-3430   (317) 736-3422 - (317) 736-3430"></textarea>
+          <div class="action-row" style="margin-top:8px; margin-bottom:0;">
+            <button class="btn primary" id="eb-btnParse">Parse &amp; Normalize</button>
+            <button class="btn" id="eb-btnReset">Reset</button>
+            <span class="status-msg" id="eb-status"></span>
+          </div>
+        </div>
+
+        <div class="pane">
+          <div class="section-head">Merge settings</div>
+          <div class="input-group">
+            <span class="input-label">Don't merge across</span>
+            <select id="eb-bucketSize">
+              <option value="1000" selected>Thousands (8000–8999 separate from 9000–9999)</option>
+              <option value="100">Hundreds (8100–8199 separate from 8200–8299)</option>
+              <option value="10">Tens</option>
+              <option value="0">No bucket rule</option>
+            </select>
+          </div>
+          <div class="input-group">
+            <span class="input-label">Allow a range only when…</span>
+            <select id="eb-phoneRule">
+              <option value="requireConsecutive" selected>Extension AND phone are consecutive</option>
+              <option value="requireSamePrefix">Phone prefix matches (first 6 digits), ext consecutive</option>
+              <option value="ignorePhones">Ignore phones (extensions only)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pane">
+          <div class="section-head">Remove extensions</div>
+          <div class="input-group">
+            <span class="input-label">Remove list (singles or ranges)</span>
+            <input type="text" id="eb-removeInput" placeholder="e.g. 3421, 3433-3434, 4742" />
+            <span style="font-size:11px; color:var(--text3); font-family:var(--mono);">Comma-separated. Ranges like 2224-2227 supported.</span>
+          </div>
+          <div class="action-row" style="margin-bottom:0;">
+            <button class="btn primary" id="eb-btnRemove" disabled>Remove + Rebuild</button>
+            <button class="btn" id="eb-btnCopy" disabled>Copy output</button>
+            <button class="btn" id="eb-exportBtn" disabled>↓ .txt</button>
+          </div>
+          <div id="eb-statsRebuild" style="font-family:var(--mono); font-size:11px; color:var(--text3); margin-top:8px;">No output yet.</div>
+        </div>
+      </div>
+
+      <div class="pane">
+        <div class="pane-header">
+          <span class="pane-title">Rebuilt ranges</span>
+          <span style="font-family:var(--mono); font-size:11px; color:var(--text3);">Format: extA – extB &nbsp;&nbsp; phoneA – phoneB &nbsp;&nbsp; Range Size</span>
+        </div>
+        <textarea id="eb-out" readonly style="min-height:260px;"
+          placeholder="Rebuilt ranges will appear here..."></textarea>
       </div>
     </div>
 
-    <div>
-      <p style="margin: 0 0 6px 0;">Output (one per line):</p>
-      <textarea id="output" rows="14" style="width:100%; font-size:14px;" readonly></textarea>
+    <!-- INNER: Inspector -->
+    <div class="inner-panel" id="eb-inspect">
+      <div class="pane-header mb12">
+        <span class="pane-title">Range Inspector</span>
+        <span id="eb-pillInspect" class="pill">Load data in Remove &amp; Rebuild tab first</span>
+      </div>
+      <div id="eb-inspectSummary" class="inspect-summary" style="display:none;"></div>
+      <div class="section-head">Changes needed</div>
+      <div class="change-list" id="eb-listChanges">
+        <div class="change-item" style="color:var(--text3); font-family:var(--mono); font-size:12px;">No data loaded yet.</div>
+      </div>
     </div>
   </div>
 
+</main>
+
 <script>
-const el = (id) => document.getElementById(id);
+(function () {
 
-function pretty10(d) {
-  if (d.length !== 10) return d;
-  return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
-}
+  // ══════════════════════════════════════════════════
+  // THEME
+  // ══════════════════════════════════════════════════
+  const themeBtn = document.getElementById('themeToggle');
+  let isDark = true;
+  themeBtn.addEventListener('click', () => {
+    isDark = !isDark;
+    document.body.classList.toggle('light', !isDark);
+    themeBtn.textContent = isDark ? '☀ Light' : '☾ Dark';
+  });
 
-function splitIntoPieces(text) {
-  // Split on newlines, commas, semicolons, tabs, pipes
-  // Do NOT split on slash or dash — needed for range detection
-  return text.split(/[\r\n,;\t|]+/g);
-}
-
-function toPhoneDigits(str) {
-  const digits = (str || "").replace(/\D/g, "");
-  if (!digits) return "";
-  if (digits.length === 10) return digits;
-  if (digits.length === 11 && digits.startsWith("1")) return digits.slice(1);
-  if (digits.length > 10) return digits.slice(-10);
-  return "";
-}
-
-// Detect lines like "7659327000 - 7659327099" or "765-932-7000 - 765-932-7099"
-// Returns an array of digit strings if valid range, otherwise null.
-// Extract all 10-digit phone numbers from a string
-function extractAllPhoneNumbers(piece) {
-  const matches = piece.match(/\d{7,}/g) || [];
-  return matches.map(m => toPhoneDigits(m)).filter(Boolean);
-}
-
-// If a line contains exactly two phone numbers, treat it as a range.
-// Handles prefixes like "DID range - 7659327000 - 7659327099"
-function tryExpandRange(piece) {
-  const nums = extractAllPhoneNumbers(piece);
-  if (nums.length !== 2) return null;
-
-  const s = parseInt(nums[0], 10);
-  const e = parseInt(nums[1], 10);
-
-  // Must be a forward range and not absurdly large
-  if (e <= s || (e - s) > 10000) return null;
-
-  const results = [];
-  for (let n = s; n <= e; n++) {
-    results.push(String(n).padStart(10, "0"));
-  }
-  return results;
-}
-
-function recompute() {
-  const keep10 = el("keep10").checked;
-  const pretty = el("formatPretty").checked;
-  const dropEmpty = el("dropEmpty").checked;
-  const dedupe = el("dedupe").checked;
-
-  const pieces = splitIntoPieces(el("input").value);
-
-  let outList = [];
-  for (const p of pieces) {
-    const trimmed = p.trim();
-    // First try to expand as a range (e.g. "7659327000 - 7659327099")
-    const expanded = tryExpandRange(trimmed);
-    if (expanded) {
-      let exp = expanded;
-      if (keep10) exp = exp.map(d => d.slice(-10));
-      outList.push(...exp);
-      continue;
-    }
-    // Otherwise treat as a single number
-    let d = toPhoneDigits(trimmed);
-    if (!d) continue;
-    if (keep10) d = d.slice(-10);
-    outList.push(d);
-  }
-
-  if (pretty) outList = outList.map(pretty10);
-
-  if (dropEmpty) outList = outList.filter(x => x.length > 0);
-
-  if (dedupe) {
-    const seen = new Set();
-    outList = outList.filter(x => (seen.has(x) ? false : (seen.add(x), true)));
-  }
-
-  const out = outList.join("\n");
-  el("output").value = out;
-
-  if (el("autocopy").checked && out.length > 0) {
-    navigator.clipboard.writeText(out).then(() => {
-      el("status").textContent = "Copied!";
-      clearTimeout(window.__copyT);
-      window.__copyT = setTimeout(() => el("status").textContent = "", 800);
-    }).catch(() => {
-      el("status").textContent = "Clipboard blocked (browser)";
+  // ══════════════════════════════════════════════════
+  // MAIN TABS
+  // ══════════════════════════════════════════════════
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
     });
-  } else {
-    el("status").textContent = "";
+  });
+
+  // INNER TABS (Extension Blaster)
+  document.querySelectorAll('.inner-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.inner-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.inner-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.inner).classList.add('active');
+    });
+  });
+
+  // ══════════════════════════════════════════════════
+  // SHARED UTILITIES
+  // ══════════════════════════════════════════════════
+  const $ = id => document.getElementById(id);
+
+  function toPhoneDigits(str) {
+    const digits = (str || '').replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.length === 10) return digits;
+    if (digits.length === 11 && digits.startsWith('1')) return digits.slice(1);
+    if (digits.length > 10) return digits.slice(-10);
+    return '';
   }
-}
 
-["input","keep10","formatPretty","dropEmpty","dedupe","autocopy"]
-  .forEach(id => el(id).addEventListener(id === "input" ? "input" : "change", recompute));
+  function extractAllPhoneNumbers(piece) {
+    const matches = piece.match(/\d{7,}/g) || [];
+    return matches.map(m => toPhoneDigits(m)).filter(Boolean);
+  }
 
-el("clearBtn").addEventListener("click", () => {
-  el("input").value = "";
-  el("output").value = "";
-  el("status").textContent = "";
-});
+  function tryExpandRange(piece) {
+    const nums = extractAllPhoneNumbers(piece);
+    if (nums.length !== 2) return null;
+    const s = parseInt(nums[0], 10);
+    const e = parseInt(nums[1], 10);
+    if (e <= s || (e - s) > 10000) return null;
+    const results = [];
+    for (let n = s; n <= e; n++) results.push(String(n).padStart(10, '0'));
+    return results;
+  }
 
-recompute();
+  function flashStatus(el, msg = 'Copied!') {
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.classList.remove('show'), 1400);
+  }
+
+  async function copyText(text, statusEl) {
+    try {
+      await navigator.clipboard.writeText(text);
+      if (statusEl) flashStatus(statusEl, 'Copied!');
+    } catch {
+      if (statusEl) flashStatus(statusEl, 'Clipboard blocked');
+    }
+  }
+
+  function downloadTxt(content, filename) {
+    const blob = new Blob([content], { type: 'text/plain' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function pluralize(n, word) {
+    return `${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}`;
+  }
+
+  // ══════════════════════════════════════════════════
+  // TAB 1 — QUICK CLEAN
+  // ══════════════════════════════════════════════════
+  function cleanerRecompute() {
+    const keep10    = $('c-keep10').checked;
+    const pretty    = $('c-pretty').checked;
+    const dropEmpty = $('c-dropEmpty').checked;
+    const dedupe    = $('c-dedupe').checked;
+
+    const pieces = $('c-input').value.split(/[\r\n,;\t|]+/g);
+    let outList = [];
+    for (const p of pieces) {
+      const trimmed = p.trim();
+      const expanded = tryExpandRange(trimmed);
+      if (expanded) {
+        let exp = expanded;
+        if (keep10) exp = exp.map(d => d.slice(-10));
+        outList.push(...exp);
+        continue;
+      }
+      let d = toPhoneDigits(trimmed);
+      if (!d) continue;
+      if (keep10) d = d.slice(-10);
+      outList.push(d);
+    }
+
+    if (pretty) outList = outList.map(d => {
+      if (d.length !== 10) return d;
+      return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+    });
+
+    if (dropEmpty) outList = outList.filter(x => x.length > 0);
+
+    if (dedupe) {
+      const seen = new Set();
+      outList = outList.filter(x => seen.has(x) ? false : (seen.add(x), true));
+    }
+
+    const out = outList.join('\n');
+    $('c-output').value = out;
+    $('c-count').textContent = pluralize(outList.filter(Boolean).length, 'number');
+
+    if ($('c-autocopy').checked && out.length > 0) copyText(out, $('c-status'));
+  }
+
+  ['c-keep10','c-pretty','c-dropEmpty','c-dedupe','c-autocopy'].forEach(id =>
+    $(id).addEventListener('change', cleanerRecompute));
+  $('c-input').addEventListener('input', cleanerRecompute);
+  $('c-clearBtn').addEventListener('click', () => {
+    $('c-input').value = ''; $('c-output').value = ''; $('c-count').textContent = '0 numbers';
+  });
+  $('c-copyBtn').addEventListener('click', () => copyText($('c-output').value, $('c-status')));
+  $('c-exportBtn').addEventListener('click', () => {
+    const v = $('c-output').value.trim(); if (v) downloadTxt(v, 'cleaned-numbers.txt');
+  });
+
+  // ══════════════════════════════════════════════════
+  // TAB 2 — DID EXPANDER
+  // ══════════════════════════════════════════════════
+  function parseDIDInput(raw) {
+    const lines = raw.replace(/\r\n/g, '\n').split('\n')
+      .map(l => l.trim()).filter(l => l && l.toLowerCase() !== 'delete');
+    const rangeRegex = /DID\s*range\s*-\s*(\d{7,})\s*(?:-\s*(\d{7,}))?\s*(\(\s*single\s*DN\s*\))?/gi;
+    const groups = [];
+    for (const line of lines) {
+      let m; rangeRegex.lastIndex = 0;
+      while ((m = rangeRegex.exec(line)) !== null) {
+        const a = m[1], b = m[2];
+        const isSingle = !!m[3] || !b;
+        const start = Number(a), end = isSingle ? start : Number(b);
+        if (!isFinite(start) || !isFinite(end) || end < start) continue;
+        const label = isSingle ? `${start} (single DN)` : `${start} - ${end}`;
+        const numbers = [];
+        for (let n = start; n <= end; n++) numbers.push(n);
+        groups.push({ label, start, end, isSingle, numbers });
+      }
+    }
+    return groups;
+  }
+
+  function runExpander() {
+    const raw = $('e-input').value;
+    let groups = parseDIDInput(raw);
+    if ($('e-sort').checked) groups.sort((a, b) => a.start - b.start);
+    const dedupe = $('e-dedupe').checked;
+
+    const groupedLines = [], allNumbers = [];
+    let rangeCount = 0, singleCount = 0;
+    for (const g of groups) {
+      let nums = g.numbers.slice();
+      if (dedupe) nums = [...new Set(nums)];
+      allNumbers.push(...nums);
+      groupedLines.push(`── ${g.label} (${nums.length.toLocaleString()} number${nums.length===1?'':'s'})`);
+      for (const n of nums) groupedLines.push(String(n));
+      groupedLines.push('');
+      if (g.isSingle) singleCount++; else rangeCount++;
+    }
+
+    let numbersOnly = allNumbers.slice();
+    if (dedupe) numbersOnly = [...new Set(numbersOnly)];
+    numbersOnly.sort((a, b) => a - b);
+
+    const groupedText = groupedLines.join('\n').trim();
+    const numbersText = numbersOnly.map(String).join('\n');
+
+    $('e-grouped').value = groupedText;
+    $('e-numbers').value = numbersText;
+    $('e-countGrouped').textContent = pluralize(groups.length, 'group');
+    $('e-countNumbers').textContent = pluralize(numbersOnly.length, 'number');
+    $('e-statGroups').textContent = groups.length.toLocaleString();
+    $('e-statTotal').textContent = numbersOnly.length.toLocaleString();
+    $('e-statRanges').textContent = rangeCount.toLocaleString();
+    $('e-statSingles').textContent = singleCount.toLocaleString();
+    $('e-stats').style.display = groups.length > 0 ? 'flex' : 'none';
+
+    if ($('e-autocopy').checked && numbersText) copyText(numbersText, $('e-status'));
+  }
+
+  $('e-processBtn').addEventListener('click', runExpander);
+  $('e-copyGrouped').addEventListener('click', () => copyText($('e-grouped').value, $('e-status')));
+  $('e-copyNumbers').addEventListener('click', () => copyText($('e-numbers').value, $('e-status')));
+  $('e-exportGrouped').addEventListener('click', () => { const v=$('e-grouped').value.trim(); if(v) downloadTxt(v,'did-grouped.txt'); });
+  $('e-exportNumbers').addEventListener('click', () => { const v=$('e-numbers').value.trim(); if(v) downloadTxt(v,'did-numbers.txt'); });
+  $('e-clearBtn').addEventListener('click', () => {
+    $('e-input').value=''; $('e-grouped').value=''; $('e-numbers').value='';
+    $('e-countGrouped').textContent='0 groups'; $('e-countNumbers').textContent='0 numbers';
+    $('e-stats').style.display='none';
+  });
+
+  // ══════════════════════════════════════════════════
+  // TAB 3 — DID RANGE REBUILDER
+  // ══════════════════════════════════════════════════
+  function parseRebuildGroups(text) {
+    const lines = text.split('\n');
+    const groups = [];
+    for (const line of lines) {
+      if (!line.toLowerCase().includes('did range')) continue;
+      const nums = (line.match(/\d+/g) || []).map(Number);
+      if (!nums.length) continue;
+      groups.push({ start: nums[0], end: nums.length > 1 ? nums[nums.length - 1] : nums[0] });
+    }
+    return groups;
+  }
+
+  function parseRemovalIntervals(text) {
+    const tokens = text.split(/[,|\n]/).map(t => t.trim()).filter(Boolean);
+    const intervals = [];
+    for (const t of tokens) {
+      const nums = (t.match(/\d+/g) || []).map(Number);
+      if (!nums.length) continue;
+      intervals.push(nums.length === 1
+        ? { start: nums[0], end: nums[0] }
+        : { start: Math.min(nums[0], nums[nums.length-1]), end: Math.max(nums[0], nums[nums.length-1]) });
+    }
+    return mergeIntervals(intervals);
+  }
+
+  function mergeIntervals(list) {
+    list = list.filter(r => Number.isFinite(r.start) && Number.isFinite(r.end) && r.start <= r.end);
+    list.sort((a,b) => a.start - b.start || a.end - b.end);
+    const out = [];
+    for (const r of list) {
+      if (!out.length || r.start > out[out.length-1].end + 1) out.push({...r});
+      else out[out.length-1].end = Math.max(out[out.length-1].end, r.end);
+    }
+    return out;
+  }
+
+  function subtractIntervals(group, removals) {
+    let segs = [group];
+    for (const r of removals) {
+      const next = [];
+      for (const s of segs) {
+        if (r.end < s.start || r.start > s.end) next.push(s);
+        else {
+          if (r.start > s.start) next.push({ start: s.start, end: r.start - 1 });
+          if (r.end < s.end) next.push({ start: r.end + 1, end: s.end });
+        }
+      }
+      segs = next;
+    }
+    return segs.filter(s => s.start <= s.end);
+  }
+
+  function intersectIntervals(group, removals) {
+    const out = [];
+    for (const r of removals) {
+      const s = Math.max(group.start, r.start), e = Math.min(group.end, r.end);
+      if (s <= e) out.push({ start: s, end: e });
+    }
+    return out;
+  }
+
+  function labelInterval(g) {
+    const size = g.end - g.start + 1;
+    return g.start === g.end
+      ? `${g.start} (single DN)   Range size: (${size})`
+      : `${g.start} - ${g.end}   Range size: (${size})`;
+  }
+
+  function countInterval(g) { return g.end - g.start + 1; }
+
+  function runRebuilder() {
+    const groups = parseRebuildGroups($('r-input').value);
+    const removals = parseRemovalIntervals($('r-remove').value);
+
+    let rebuilt = [], removed = [];
+    for (const g of groups) {
+      rebuilt.push(...subtractIntervals(g, removals));
+      removed.push(...intersectIntervals(g, removals));
+    }
+    rebuilt = mergeIntervals(rebuilt);
+    removed = mergeIntervals(removed);
+
+    $('r-rebuild').value = rebuilt.map(labelInterval).join('\n');
+    $('r-removed').value = removed.map(labelInterval).join('\n');
+
+    $('r-countRebuilt').textContent = pluralize(rebuilt.length, 'segment');
+    $('r-countRemoved').textContent = pluralize(removed.length, 'segment');
+
+    const removedCount = removed.reduce((acc, g) => acc + countInterval(g), 0);
+    $('r-statRebuilt').textContent = rebuilt.length.toLocaleString();
+    $('r-statRemoved').textContent = removed.length.toLocaleString();
+    $('r-statRemovedCount').textContent = removedCount.toLocaleString();
+    $('r-stats').style.display = 'flex';
+  }
+
+  $('r-processBtn').addEventListener('click', runRebuilder);
+  $('r-copyRebuild').addEventListener('click', () => copyText($('r-rebuild').value, $('r-status')));
+  $('r-copyRemoved').addEventListener('click', () => copyText($('r-removed').value, $('r-status')));
+  $('r-exportRebuild').addEventListener('click', () => { const v=$('r-rebuild').value.trim(); if(v) downloadTxt(v,'rebuilt-ranges.txt'); });
+  $('r-exportRemoved').addEventListener('click', () => { const v=$('r-removed').value.trim(); if(v) downloadTxt(v,'removed-ranges.txt'); });
+  $('r-clearBtn').addEventListener('click', () => {
+    $('r-input').value=''; $('r-remove').value=''; $('r-rebuild').value=''; $('r-removed').value='';
+    $('r-countRebuilt').textContent='0 segments'; $('r-countRemoved').textContent='0 segments';
+    $('r-stats').style.display='none';
+  });
+
+  // ══════════════════════════════════════════════════
+  // TAB 4 — EXTENSION BLASTER
+  // ══════════════════════════════════════════════════
+  const ebState = { parsed: null, currentItems: [], optimized: null };
+
+  const digitsOnly = s => (s||'').replace(/\D+/g,'');
+
+  function parseExtPartCore(token) {
+    const t = (token||'').trim();
+    const mRange = t.match(/^(\d{2,6})\s*[-–—]\s*(\d{2,6})$/);
+    if (mRange) {
+      const a = parseInt(mRange[1],10), b = parseInt(mRange[2],10);
+      if (Number.isFinite(a)&&Number.isFinite(b)&&a<=b) return {kind:'range',a,b,isRange:true};
+      return null;
+    }
+    const mSingle = t.match(/^(\d{2,6})$/);
+    if (mSingle) { const a=parseInt(mSingle[1],10); return {kind:'single',a,b:a,isRange:false}; }
+    return null;
+  }
+
+  function parsePhoneToken(token) {
+    const t = (token||'').trim();
+    if (!t) return null;
+    const phoneRe = /(\(?\d{3}\)?\D*\d{3}\D*\d{4})/g;
+    const matches = t.match(phoneRe);
+    if (matches&&matches.length>=2&&/[-–—]/.test(t)) {
+      const a=digitsOnly(matches[0]),b=digitsOnly(matches[1]);
+      if (a.length===10&&b.length===10) return {kind:'range',a,b};
+    }
+    if (matches&&matches.length>=1) {
+      const a=digitsOnly(matches[0]);
+      if (a.length===10) return {kind:'single',a};
+    }
+    const d=digitsOnly(t);
+    if (d.length===10) return {kind:'single',a:d};
+    return null;
+  }
+
+  const phonePrefix6 = p => p?p.slice(0,6):'';
+  const bucketKey = (ext, bs) => { const b=parseInt(bs,10); return b?String(Math.floor(ext/b)):'ALL'; };
+  const fmtExtRange = (a,b) => a===b?String(a):`${a} - ${b}`;
+  const fmtPhoneRange = (a,b) => { if(!a&&!b) return ''; if(a&&(!b||a===b)) return a; return `${a} - ${b}`; };
+
+  function makeExtToOptRangeMap(optRanges) {
+    const sorted = (optRanges||[]).slice().sort((a,b)=>a.extA-b.extA);
+    return {
+      get(ext) {
+        let lo=0,hi=sorted.length-1;
+        while(lo<=hi){const mid=(lo+hi)>>1,r=sorted[mid];if(ext<r.extA)hi=mid-1;else if(ext>r.extB)lo=mid+1;else return{a:r.extA,b:r.extB};}
+        return undefined;
+      },
+      _sorted: sorted
+    };
+  }
+
+  function parsePasted(text) {
+    const lines = (text||'').split(/\r?\n/);
+    const parsedRangeRows = [], expanded = [];
+    const rowRe = /^\s*(\d{2,6}(?:\s*[-–—]\s*\d{2,6})?)\s+(.+?)(?:\s+\d+)?\s*$/;
+
+    for (const rawLine of lines) {
+      const line = rawLine.replace(/\u00A0/g,'');
+      const t = line.trim();
+      if (!t) continue;
+      const low = t.toLowerCase();
+      if (low.includes('search for extensions')||low.includes('count of extensions')||
+          (low.includes('ext')&&low.includes('telephone'))||low.includes('telephone number')||
+          low.includes('location prefix')||low==='ext.'||/^[-–—\s]+$/.test(t)) continue;
+
+      const m = t.match(rowRe);
+      if (!m) continue;
+      const extTok = parseExtPartCore(m[1].trim());
+      if (!extTok) continue;
+      const phoneTok = parsePhoneToken(m[2].trim());
+
+      parsedRangeRows.push({
+        extPart: m[1].trim(),
+        phoneDigits: phoneTok?(phoneTok.kind==='single'?phoneTok.a:`${phoneTok.a} - ${phoneTok.b}`):'',
+        raw: t
+      });
+
+      if (extTok.kind==='single') {
+        const p = phoneTok?.kind==='single'?phoneTok.a:(phoneTok?.kind==='range'?phoneTok.a:'');
+        expanded.push({ext:extTok.a,phone:p});
+      } else {
+        const count = extTok.b - extTok.a + 1;
+        if (!phoneTok) { for(let e=extTok.a;e<=extTok.b;e++) expanded.push({ext:e,phone:''}); }
+        else if (phoneTok.kind==='single') { for(let e=extTok.a;e<=extTok.b;e++) expanded.push({ext:e,phone:phoneTok.a}); }
+        else {
+          const a=BigInt(phoneTok.a),b=BigInt(phoneTok.b);
+          const phoneCount=(b>=a)?Number(b-a+1n):0;
+          if (phoneCount!==count) { for(let e=extTok.a;e<=extTok.b;e++) expanded.push({ext:e,phone:''}); }
+          else { for(let i=0;i<count;i++) expanded.push({ext:extTok.a+i,phone:(a+BigInt(i)).toString()}); }
+        }
+      }
+    }
+
+    const map = new Map();
+    for (const it of expanded) {
+      const prev = map.get(it.ext);
+      if (!prev) map.set(it.ext,it);
+      else if (!prev.phone&&it.phone) map.set(it.ext,it);
+    }
+    return { items: Array.from(map.values()).sort((a,b)=>a.ext-b.ext), parsedRangeRows };
+  }
+
+  function buildRanges(items, opts) {
+    const byBucket = new Map();
+    for (const it of items) {
+      const k = bucketKey(it.ext, opts.bucketSize);
+      if (!byBucket.has(k)) byBucket.set(k,[]);
+      byBucket.get(k).push(it);
+    }
+
+    const canMerge = (prev, cur, start) => {
+      if (cur.ext!==prev.ext+1) return false;
+      if (opts.phoneRule==='ignorePhones') return true;
+      if (!prev.phone||!cur.phone||!start.phone) return false;
+      if (opts.phoneRule==='requireConsecutive') {
+        try { return BigInt(cur.phone)===(BigInt(prev.phone)+1n); } catch { return false; }
+      }
+      if (opts.phoneRule==='requireSamePrefix') return phonePrefix6(prev.phone)===phonePrefix6(cur.phone);
+      return false;
+    };
+
+    const ranges = [];
+    for (const arr of byBucket.values()) {
+      arr.sort((a,b)=>a.ext-b.ext);
+      let start=null, prev=null;
+      const flush = () => {
+        if (!start||!prev) return;
+        ranges.push({extA:start.ext,extB:prev.ext,phoneA:start.phone||'',phoneB:prev.phone||(start.phone||'')});
+        start=null; prev=null;
+      };
+      for (const cur of arr) {
+        if (!start){start=cur;prev=cur;continue;}
+        if (canMerge(prev,cur,start)) prev=cur; else {flush();start=cur;prev=cur;}
+      }
+      flush();
+    }
+    ranges.sort((a,b)=>a.extA-b.extA);
+
+    const lines = ranges.map(r => {
+      const extStr=fmtExtRange(r.extA,r.extB);
+      const phoneStr=fmtPhoneRange(r.phoneA,r.phoneB);
+      const size=r.extB-r.extA+1;
+      return size>1?`${extStr}\t${phoneStr}\tRange Size: ${size}`:`${extStr}\t${phoneStr}`;
+    });
+
+    return {ranges,lines};
+  }
+
+  function parseRemoveList(text) {
+    const out = new Set();
+    const parts = (text||'').split(',').map(s=>s.trim()).filter(Boolean);
+    for (const p of parts) {
+      const m = p.match(/^(\d{2,6})\s*[-–—]\s*(\d{2,6})$/);
+      if (m) { const a=parseInt(m[1],10),b=parseInt(m[2],10),lo=Math.min(a,b),hi=Math.max(a,b); for(let x=lo;x<=hi;x++) out.add(x); }
+      else { const s=p.match(/^(\d{2,6})$/); if(s) out.add(parseInt(s[1],10)); }
+    }
+    return out;
+  }
+
+  function ebRebuild() {
+    if (!ebState.currentItems.length) { $('eb-out').value=''; return; }
+    const opts = { bucketSize: $('eb-bucketSize').value, phoneRule: $('eb-phoneRule').value };
+    const built = buildRanges(ebState.currentItems, opts);
+    ebState.optimized = built;
+    $('eb-out').value = built.lines.join('\n');
+    $('eb-btnCopy').disabled = built.lines.length===0;
+    $('eb-exportBtn').disabled = built.lines.length===0;
+    const extCount=ebState.currentItems.length, rangeCount=built.lines.length;
+    $('eb-statsRebuild').textContent = `Output: ${rangeCount} range row(s)  ·  Extensions: ${extCount}`;
+    renderInspector();
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function renderInspector() {
+    if (!ebState.parsed) {
+      $('eb-pillInspect').textContent='Load data in Remove & Rebuild tab first';
+      $('eb-inspectSummary').style.display='none';
+      $('eb-listChanges').innerHTML='<div class="change-item" style="color:var(--text3);font-family:var(--mono);font-size:12px;">No data loaded yet.</div>';
+      return;
+    }
+
+    const originalAll = ebState.parsed.parsedRangeRows||[];
+    const optRanges = ebState.optimized?.ranges||[];
+    const extToOpt = makeExtToOptRangeMap(optRanges);
+
+    const collectOverlapping = (a,b) => {
+      const seen=new Set(), out=[];
+      const sorted=extToOpt._sorted;
+      let lo=0,hi=sorted.length-1;
+      while(lo<=hi){const mid=(lo+hi)>>1;if(sorted[mid].extB<a)lo=mid+1;else hi=mid-1;}
+      for(let i=lo;i<sorted.length&&sorted[i].extA<=b;i++){
+        const r=sorted[i],key=`${r.extA}-${r.extB}`;
+        if(seen.has(key))continue;seen.add(key);
+        const full=optRanges.find(x=>x.extA===r.extA&&x.extB===r.extB);
+        if(full)out.push(full);
+      }
+      out.sort((x,y)=>x.extA-y.extA);
+      return out;
+    };
+
+    const candidates = originalAll.filter(r => {
+      const p=parseExtPartCore(r.extPart);
+      if(!p) return false;
+      if(!p.isRange){const hit=extToOpt.get(p.a);return !!hit&&(hit.a!==hit.b);}
+      for(let e=p.a;e<=p.b;e++){const hit=extToOpt.get(e);if(!hit)continue;if(hit.a!==p.a||hit.b!==p.b)return true;}
+      return false;
+    });
+
+    const groups = new Map();
+    for (const r of candidates) {
+      const p=parseExtPartCore(r.extPart);
+      if(!p) continue;
+      const after=collectOverlapping(p.a,p.b);
+      const afterKey=after.length?after.map(x=>`${x.extA}-${x.extB}:${x.phoneA||''}-${x.phoneB||''}`).join('|'):'NO_AFTER';
+      if(!groups.has(afterKey)) groups.set(afterKey,{afterRanges:after,beforeLines:[]});
+      groups.get(afterKey).beforeLines.push(`${r.extPart}\t${(r.phoneDigits||'').trim()}`.trim());
+    }
+
+    const diffs = Array.from(groups.values()).map(g => {
+      const uniq=[...new Set(g.beforeLines)];
+      uniq.sort((a,b)=>{const pa=parseExtPartCore(a.split(/\s+/)[0])?.a??0,pb=parseExtPartCore(b.split(/\s+/)[0])?.a??0;return pa-pb;});
+      return {beforeLines:uniq,afterRanges:g.afterRanges};
+    }).sort((a,b)=>(a.afterRanges?.[0]?.extA??0)-(b.afterRanges?.[0]?.extA??0));
+
+    const optimizedRowCount = ebState.optimized?.lines?.length??0;
+    const saved = originalAll.length - optimizedRowCount;
+    const savedHtml = saved>0?`<span class="pill good">Could save ${saved} slot(s)</span>`:
+      saved===0?`<span class="pill">No change</span>`:`<span class="pill warn">Uses ${Math.abs(saved)} more</span>`;
+
+    $('eb-pillInspect').textContent = `Changes: ${diffs.length} group(s)`;
+    $('eb-inspectSummary').style.display='grid';
+    $('eb-inspectSummary').innerHTML = `
+      <span class="lbl">Extensions loaded</span><span class="val">${ebState.currentItems.length}</span>
+      <span class="lbl">As pasted (rows)</span><span class="val">${originalAll.length}</span>
+      <span class="lbl">Optimized (rows)</span><span class="val">${optimizedRowCount}</span>
+      <span class="lbl">Result</span><span class="val">${savedHtml}</span>
+      <span class="lbl">Rules</span><span class="val" style="font-weight:400;color:var(--text3);">${$('eb-bucketSize').options[$('eb-bucketSize').selectedIndex].text} · ${$('eb-phoneRule').options[$('eb-phoneRule').selectedIndex].text}</span>
+    `;
+
+    if (!diffs.length) {
+      $('eb-listChanges').innerHTML='<div class="change-item" style="color:var(--text3);font-family:var(--mono);font-size:12px;">No changes needed under current rules.</div>';
+      return;
+    }
+
+    $('eb-listChanges').innerHTML = diffs.map(d => {
+      const beforeCount=d.beforeLines.length, afterCount=d.afterRanges?.length??0;
+      const slotsSaved=Math.max(0,beforeCount-afterCount);
+      const badgeHtml=slotsSaved>0?`<span class="pill good">Saves ${slotsSaved} slot(s)</span>`:`<span class="pill">No slots saved</span>`;
+      const beforeHtml=d.beforeLines.map(l=>`<div>${escapeHtml(l)}</div>`).join('');
+      const afterLines=d.afterRanges?.length
+        ?d.afterRanges.map(r=>`${fmtExtRange(r.extA,r.extB)}\t${fmtPhoneRange(r.phoneA,r.phoneB)}`.trim())
+        :['(No optimized range found)'];
+      const afterHtml=afterLines.map(l=>`<div>${escapeHtml(l)}</div>`).join('');
+      return `<div class="change-item">
+        <div class="ci-label">BEFORE</div><div class="ci-lines">${beforeHtml}</div>
+        <div class="ci-arrow">↓</div>
+        <div class="ci-label">AFTER</div><div class="ci-after">${afterHtml}</div>
+        <div style="margin-top:8px;">${badgeHtml}</div>
+      </div>`;
+    }).join('');
+  }
+
+  $('eb-btnParse').addEventListener('click', () => {
+    try {
+      const parsed = parsePasted($('eb-paste').value||'');
+      ebState.parsed = parsed;
+      ebState.currentItems = parsed.items.slice();
+      $('eb-pillLoaded').textContent = `${ebState.currentItems.length} extensions loaded`;
+      $('eb-btnRemove').disabled = ebState.currentItems.length===0;
+      $('eb-btnCopy').disabled = true;
+      $('eb-exportBtn').disabled = true;
+      ebRebuild();
+    } catch(e) { console.error(e); alert('Parse failed — check DevTools console for details.'); }
+  });
+
+  $('eb-btnRemove').addEventListener('click', () => {
+    if (!ebState.parsed) return;
+    const removeSet = parseRemoveList($('eb-removeInput').value);
+    const before = ebState.currentItems.length;
+    ebState.currentItems = ebState.currentItems.filter(it=>!removeSet.has(it.ext));
+    const removed = before - ebState.currentItems.length;
+    $('eb-pillLoaded').textContent = removed?`Removed ${removed} · ${ebState.currentItems.length} left`:'Nothing removed';
+    ebRebuild();
+  });
+
+  $('eb-btnCopy').addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText($('eb-out').value||'');
+      flashStatus($('eb-status'),'Copied!');
+    } catch { alert('Clipboard copy failed.'); }
+  });
+
+  $('eb-exportBtn').addEventListener('click', () => { const v=$('eb-out').value.trim(); if(v) downloadTxt(v,'ext-rebuilt.txt'); });
+
+  $('eb-btnReset').addEventListener('click', () => {
+    $('eb-paste').value=''; $('eb-removeInput').value=''; $('eb-out').value='';
+    ebState.parsed=null; ebState.currentItems=[]; ebState.optimized=null;
+    $('eb-pillLoaded').textContent='No data loaded';
+    $('eb-statsRebuild').textContent='No output yet.';
+    $('eb-btnRemove').disabled=true; $('eb-btnCopy').disabled=true; $('eb-exportBtn').disabled=true;
+    renderInspector();
+  });
+
+  $('eb-bucketSize').addEventListener('change', ebRebuild);
+  $('eb-phoneRule').addEventListener('change', ebRebuild);
+
+})();
 </script>
 </body>
 </html>
